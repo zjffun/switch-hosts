@@ -1,12 +1,13 @@
 package main
 
-import(
-  "os"
-  "os/exec"
-  "fmt"
-  "strings"
-  "io/ioutil"
-  homedir "github.com/mitchellh/go-homedir"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"strings"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 func printUsage() {
@@ -87,16 +88,8 @@ func createHostsBackup() {
 
 func execCmd(command string, args ...string) string {
   cmd := exec.Command(command, args...)
-  stdout, _ := cmd.StdoutPipe()
 
-  cmd.Start()
-
-  output := make([]byte, 1024)
-  bytesRead, _ := stdout.Read(output)
-
-  cmd.Wait()
-
-  output = output[0:bytesRead]
+  output, _ := cmd.CombinedOutput()
 
   return strings.TrimSpace(string(output))
 }
@@ -119,7 +112,11 @@ func main() {
 
   config := strings.TrimSpace( os.Args[1] )
 
-  if hostConfigExist(config) {
+  if config == "show" {
+		fmt.Printf(execCmd("sudo", "cat", "/etc/hosts"))
+	} else if config == "ls" {
+		fmt.Printf(execCmd("/bin/sh", "-c", "tail " + hostConfigPath("*")))
+	} else if hostConfigExist(config) {
     applyConfig(config)
     fmt.Printf("Hosts configuration switched to %s.\n", config)
   } else {
